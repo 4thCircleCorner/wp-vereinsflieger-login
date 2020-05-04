@@ -3,7 +3,7 @@
   Plugin Name: Vereinsflieger Login
   Plugin URI:
   Description:  Authenticate WordPress against Vereinsflieger.de.
-  Version: 0.1
+  Version: 0.2-dev
   Author:
   Author URI:
  */
@@ -80,6 +80,8 @@ class VereinsfliegerLogin {
         $this->add_setting('user_login', "uid");
         $this->add_setting('user_nicename', "first_lastname");
         $this->add_setting('user_display_name', "first_lastname");
+        $this->add_setting('cid', "0");
+        $this->add_setting('appkey', "");
 
         $this->add_setting('user_meta_data', array());
     }
@@ -131,15 +133,6 @@ class VereinsfliegerLogin {
                     <span class="description"><code>Vereinsflieger.de</code> User ID</span>
                 </td>
             </tr>
-            <?php /*if (!is_null($this->vereinsfliegerRest)) : ?>
-                <tr>
-                    <th><label for="vfl_authtoken">Current AuthToken</label></th>
-                    <td>
-                        <input type="text" name="vfl_authtoken" id="vfl_authtoken" value="<?php echo esc_attr(); ?>" class="regular-text" disabled="disabled"/><br />
-                        <span class="description"><code>Vereinsflieger.de</code> AccessToken</span>
-                    </td>
-                </tr>
-            <?php endif;*/ ?>
         </table>
         <?php
     }
@@ -220,13 +213,13 @@ class VereinsfliegerLogin {
 
     function saved_admin_notice() {
         echo '<div class="updated">
-	       <p>Vereinsflieger Login settings have been saved.</p>
-	    </div>';
+           <p>Vereinsflieger Login settings have been saved.</p>
+        </div>';
 
         if (!str_true($this->get_setting('enabled'))) {
             echo '<div class="error">
-				<p>Vereinsflieger Login is disabled.</p>
-			</div>';
+                <p>Vereinsflieger Login is disabled.</p>
+            </div>';
         }
     }
 
@@ -265,8 +258,11 @@ class VereinsfliegerLogin {
             remove_filter('authenticate', 'wp_authenticate_username_password', 20, 3);
         }
 
+        $cid = $this->get_setting('cid') ?? 0;
+        $appkey = $this->get_setting('appkey') ?? '';
+
         // Sweet, let's try to authenticate our user and pass
-        $auth_result = $this->vereinsfliegerRest->SignIn($username, $password);
+        $auth_result = $this->vereinsfliegerRest->SignIn($username, $password, $cid, $appkey);
 
         if ($auth_result) {
             $result = $this->vereinsfliegerRest->GetUser();

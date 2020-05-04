@@ -2,14 +2,14 @@
 class VereinsfliegerRestInterface
 {
 	private $InterfaceUrl = 'https://www.vereinsflieger.de/interface/rest/';
-	private $AccessToken = null;
+	private $AccessToken;
 	private $HttpStatusCode = 0;
 	private $aResponse = array();
 	
 	//=============================================================================================
 	// Anmelden
 	//=============================================================================================
-	public function SignIn($UserName, $Password, $Cid=0)
+	public function SignIn($UserName, $Password, $Cid=0, $AppKey='', $AuthSecret='')
 	{
 		// Accesstoken holen
 		$this->SendRequest("GET", "auth/accesstoken", null);
@@ -21,10 +21,12 @@ class VereinsfliegerRestInterface
 		$PassWordHash = md5($Password);
 		// Anmelden
 		$Data = array(
-			'accesstoken' => $this->AccessToken, 
-			'username' => $UserName, 
-			'password' => $PassWordHash,
-			'cid'      => $Cid);
+			'accesstoken' 	=> $this->AccessToken, 
+			'username' 		=> $UserName, 
+			'password' 		=> $PassWordHash,
+			'cid'      		=> $Cid,
+			'appkey'   		=> $AppKey,
+			'auth_secret' 	=> $AuthSecret);
 		$this->SendRequest("POST", "auth/signin", $Data);
 		return (($this->HttpStatusCode) == 200);
 	}
@@ -125,6 +127,44 @@ class VereinsfliegerRestInterface
 		$this->SendRequest("POST", "flight/list/nodate",$aData);
 		return (($this->HttpStatusCode) == 200);
 	}
+		
+	//=============================================================================================
+	// GetFlights_plane
+	//=============================================================================================
+	public function GetFlights_plane($Callsign, $Count)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'callsign' => $Callsign,
+			'count' => $Count);
+		$this->SendRequest("POST", "flight/list/plane",$aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+		
+	//=============================================================================================
+	// GetFlights_user
+	//=============================================================================================
+	public function GetFlights_user($Uid, $Count)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'uid' => $Uid,
+			'count' => $Count);
+		$this->SendRequest("POST", "flight/list/user",$aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+		
+	//=============================================================================================
+	// GetFlights_myflights
+	//=============================================================================================
+	public function GetFlights_myflights($Count)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'count' => $Count);
+		$this->SendRequest("POST", "flight/list/myflights",$aData);
+		return (($this->HttpStatusCode) == 200);
+	}
 	
 	//=============================================================================================
 	// GetPublicCalendar
@@ -132,12 +172,108 @@ class VereinsfliegerRestInterface
 	public function GetPublicCalendar($HpAccessCode="")
 	{
 		$aData = array(
-			'accesstoken' => $this->AccessToken,
 			'hpaccesscode' => $HpAccessCode
 			);
 		$this->SendRequest("POST", "calendar/list/public",$aData);
 		return (($this->HttpStatusCode) == 200);
 	}
+
+	//=============================================================================================
+	// GetUsers
+	//=============================================================================================
+	public function GetUsers()
+	{
+		$aData = array('accesstoken' => $this->AccessToken);
+		$this->SendRequest("POST", "user/list",$aData);
+		return (($this->HttpStatusCode) == 200);
+	}	
+		
+	//=============================================================================================
+	// GetReservations
+	//=============================================================================================
+	public function GetReservations()
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken
+			);
+		$this->SendRequest("POST", "reservation/list/active",$aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+		
+	//=============================================================================================
+	// GetAirplaneMaintenanceData
+	//=============================================================================================
+	public function GetAirplaneMaintenanceData($Callsign)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken
+			);
+		$this->SendRequest("POST", "maintenance/airplane/".$Callsign, $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+	
+	//=============================================================================================
+	// InsertAccountTransaction
+	//=============================================================================================
+	public function InsertAccountTransaction($aData)
+	{
+		$aData['accesstoken'] = $this->AccessToken;
+		$this->SendRequest("POST", "account/add", $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+	
+	//=============================================================================================
+	// GetAccountTransaction
+	//=============================================================================================
+	public function GetAccountTransaction($Adid)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken
+			);
+		$this->SendRequest("POST", "account/get/".intval($Adid), $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+	
+	//=============================================================================================
+	// GetAccountTransactions_today
+	//=============================================================================================
+	public function GetAccountTransactions_today()
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken
+			);
+		$this->SendRequest("POST", "account/list/today", $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+	
+	//=============================================================================================
+	// GetAccountTransactions_year
+	//=============================================================================================
+	public function GetAccountTransactions_year($Year)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'year' => $Year
+			);
+		$this->SendRequest("POST", "account/list/year", $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+
+	//=============================================================================================
+	// GetAccountTransactions_daterange
+	//=============================================================================================
+	public function GetAccountTransactions_daterange($DateFrom, $DateTo)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'datefrom' => $DateFrom,
+			'dateto' => $DateTo
+			);
+		$this->SendRequest("POST", "account/list/daterange", $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+
+
 
 	//=============================================================================================
 	// GetHttpStatusCode
@@ -205,29 +341,6 @@ class VereinsfliegerRestInterface
 	public function SetInterfaceUrl($InterfaceUrl)
 	{
 		return $this->InterfaceUrl = $InterfaceUrl;
-	}
-        
-        //=============================================================================================
-	// GetAccessToken
-	//=============================================================================================
-	public function GetAccessToken()
-	{
-            return $this->AccessToken;
-	}
-        
-        //=============================================================================================
-	// SetAccessToken
-	//=============================================================================================
-	public function SetAccessToken($AccessToken)
-	{
-            if (null !== $this->AccessToken) {
-                if ($this->AccessToken !== $AccessToken) {
-                        $this->SignOut();
-                } else {
-                    return 0;
-                }
-            }
-            return $this->AccessToken = $AccessToken;
 	}
 
 }
