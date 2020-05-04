@@ -26,6 +26,7 @@ class VereinsfliegerLogin {
         $this->vereinsfliegerRest = new VereinsfliegerRestInterface();
 
         $this->fix_user_meta[] = array('uid', $this->prefix . 'uid');
+        $this->fix_user_meta[] = array('memberid', $this->prefix . 'memberid');
 
         add_action('admin_init', array($this, 'save_settings'));
         add_action('show_user_profile', array($this, 'extra_profile_fields'));
@@ -129,8 +130,15 @@ class VereinsfliegerLogin {
             <tr>
                 <th><label for="vfl_uid">UID</label></th>
                 <td>
-                    <input type="text" name="vfl_uid" id="vfl_uid" value="<?php echo esc_attr(get_user_meta($user->ID, 'vfl_uid', true)); ?>" class="regular-text" /><br />
+                    <input type="text" name="vfl_uid" id="vfl_uid" value="<?php echo esc_attr(get_user_meta($user->ID, 'vfl_uid', true)); ?>" class="regular-text"  readonly="readonly" /><br />
                     <span class="description"><code>Vereinsflieger.de</code> User ID</span>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="vfl_memberid">Member-ID</label></th>
+                <td>
+                    <input type="text" name="vfl_memberid" id="vfl_uid" value="<?php echo esc_attr(get_user_meta($user->ID, 'vfl_memberid', true)); ?>" class="regular-text" readonly="readonly" /><br />
+                    <span class="description"><code>Vereinsflieger.de</code> Member ID</span>
                 </td>
             </tr>
         </table>
@@ -168,7 +176,7 @@ class VereinsfliegerLogin {
         }
 
         if ('user_meta_data' === $option) {
-            $result = array_merge($this->settings[$option], $this->fix_user_meta);
+            $result = array_unique(array_merge($this->settings[$option], $this->fix_user_meta),SORT_REGULAR);
             return apply_filters($this->prefix . 'get_setting', $result, $option);
         }
 
@@ -196,9 +204,15 @@ class VereinsfliegerLogin {
             foreach ($new_settings as $setting_name => $setting_value) {
                 foreach ($setting_value as $type => $value) {
                     if ($setting_name == 'user_meta_data') {
-                        $this->set_setting($setting_name, array_map(function ($attr) {
-                                    return explode(':', $attr);
-                                }, array_filter(preg_split('/\r\n|\n|\r|;/', $value))));
+                        $this->set_setting(
+                                $setting_name,
+                                array_unique(
+                                        array_map(function ($attr) {
+                                            return explode(':', $attr);
+                                        }, array_filter(preg_split('/\r\n|\n|\r|;/', $value))),
+                                        SORT_REGULAR
+                                )
+                        );
                     } elseif ($type == "array") {
                         $this->set_setting($setting_name, explode(";", $value));
                     } else {
@@ -268,6 +282,9 @@ class VereinsfliegerLogin {
             $result = $this->vereinsfliegerRest->GetUser();
             if (!isset($result['uid'])) {
                 return $this->auth_error("{$this->prefix}login_error", __('<strong>Vereinsflieger Login Error</strong>: Vereinsflieger credentials are correct, but there is no user id given in response.'));
+            }
+            if (!isset($result['email']) || empty($result['email'])) {
+                return $this->auth_error("{$this->prefix}login_error", __('<strong>Vereinsflieger Login Error</strong>: Vereinsflieger credentials are correct, but there is no user mail given in response. Check Vereinsflieger user settings for given email address.'));
             }
             $user = get_user_by($this->get_setting('compare_wp'), $result[$this->get_setting('compare_vfl')]);
 
