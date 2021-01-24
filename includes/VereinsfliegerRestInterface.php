@@ -364,6 +364,7 @@ class VereinsfliegerRestInterface
 		$InterfaceUrl = $this->InterfaceUrl.$Resource;
 		$CurlHandle = curl_init();
 		curl_setopt($CurlHandle, CURLOPT_URL, $InterfaceUrl);
+		curl_setopt($CurlHandle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 		switch($Method) {
 			case 'GET':
 				break;
