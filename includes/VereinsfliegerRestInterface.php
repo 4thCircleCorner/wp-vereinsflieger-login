@@ -116,6 +116,19 @@ class VereinsfliegerRestInterface
 		$this->SendRequest("POST", "flight/list/date",$aData);
 		return (($this->HttpStatusCode) == 200);
 	}
+		
+	//=============================================================================================
+	// GetFlights_Modified
+	//=============================================================================================
+	public function GetFlights_Modified($Days)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'days' => $Days
+			);
+		$this->SendRequest('POST', 'flight/list/modified', $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
 	
 	//=============================================================================================
 	// GetFlights_NoDate
@@ -273,7 +286,60 @@ class VereinsfliegerRestInterface
 		return (($this->HttpStatusCode) == 200);
 	}
 
+	//=============================================================================================
+	// GetWorkHours_daterange
+	//=============================================================================================
+	public function GetWorkHours_daterange($DateFrom, $DateTo)
+	{
+		$aData = array(
+			'accesstoken' => $this->AccessToken,
+			'datefrom' => $DateFrom,
+			'dateto' => $DateTo
+			);
+		$this->SendRequest('POST', 'workhours/list/daterange', $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
 
+	//=============================================================================================
+	// GetWorkHourCategories
+	//=============================================================================================
+	public function GetWorkHourCategories()
+	{
+		$aData = array('accesstoken' => $this->AccessToken);
+		$this->SendRequest('POST', 'workhourcategories/list', $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+
+	//=============================================================================================
+	// InsertWorkHours
+	//=============================================================================================
+	public function InsertWorkHours($aData)
+	{
+		$aData['accesstoken'] = $this->AccessToken;
+		$this->SendRequest('POST', 'workhours/add', $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+
+	//=============================================================================================
+	// GetArticles
+	//=============================================================================================
+	public function GetArticles()
+	{
+		$aData = array('accesstoken' => $this->AccessToken);
+		$this->SendRequest('POST', 'articles/list', $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
+
+
+	//=============================================================================================
+	// InsertSale
+	//=============================================================================================
+	public function InsertSale($aData)
+	{
+		$aData['accesstoken'] = $this->AccessToken;
+		$this->SendRequest('POST', 'sale/add', $aData);
+		return (($this->HttpStatusCode) == 200);
+	}
 
 	//=============================================================================================
 	// GetHttpStatusCode
