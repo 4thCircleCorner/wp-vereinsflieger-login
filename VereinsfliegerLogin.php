@@ -32,6 +32,10 @@ class VereinsfliegerLogin {
         add_action('show_user_profile', array($this, 'extra_profile_fields'));
         add_action('edit_user_profile', array($this, 'extra_profile_fields'));
 
+        //add column to user list
+        add_filter('manage_users_columns', array($this, 'custom_add_user_id_column'));
+        add_filter('manage_users_custom_column', array($this, 'custom_show_user_id_column_content'), 10, 3);
+
         if ($this->is_network_version()) {
             add_action('network_admin_menu', array($this, 'menu'));
         } else {
@@ -59,6 +63,21 @@ class VereinsfliegerLogin {
         if ($this->get_setting('version') === false || $this->get_setting('version') != $version) {
             $this->upgrade_settings();
         }
+    }
+
+    //Adds Custom Column To Users List Table
+    function custom_add_user_id_column($columns) {
+        $columns['vfl_uid'] = 'VFL-UID';
+        return $columns;
+    }
+
+    //Adds Content To The Custom Added Column
+    function custom_show_user_id_column_content($value, $column_name, $user_id) {
+        //$user = get_userdata($user_id);
+        if ('vfl_uid' == $column_name) {
+            return get_user_meta($user_id, 'vfl_uid', true);
+        }
+        return $value;
     }
 
     public static function getInstance() {
@@ -176,7 +195,7 @@ class VereinsfliegerLogin {
         }
 
         if ('user_meta_data' === $option) {
-            $result = array_unique(array_merge($this->settings[$option], $this->fix_user_meta),SORT_REGULAR);
+            $result = array_unique(array_merge($this->settings[$option], $this->fix_user_meta), SORT_REGULAR);
             return apply_filters($this->prefix . 'get_setting', $result, $option);
         }
 
@@ -242,7 +261,7 @@ class VereinsfliegerLogin {
         if (is_a($user, 'WP_User')) {
             return $user;
         }
-
+      
         // Determine if user a local admin
         $local_admin = false;
         $user_obj = get_user_by('login', $username);
@@ -263,7 +282,15 @@ class VereinsfliegerLogin {
 
             if (empty($password))
                 $error->add('empty_password', __('<strong>ERROR</strong>: The password field is empty.'));
-
+            
+            return $error;
+        }
+        
+        // If username is not an email or username by vereinsfleiger.de reject this attempt
+        if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $username) &&
+            !preg_match("/^([a-z]{2})([0-9]{5,6})$/ix", $username)) {
+            $error = new WP_Error();
+            $error->add('invalid_username', __('<strong>ERROR</strong>: The username does not match.'));
             return $error;
         }
 
